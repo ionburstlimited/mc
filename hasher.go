@@ -7,9 +7,10 @@ import (
 	"hash/fnv"
 )
 
-type hasher interface {
-	update(servers []*server)
-	getServerIndex(key string) (uint, error)
+// Hasher - interface for hasher implemetationa
+type Hasher interface {
+	Update(servers []*Server)
+	GetServerIndex(key string) (uint, error)
 }
 
 type moduloHasher struct {
@@ -17,16 +18,17 @@ type moduloHasher struct {
 	h32      hash.Hash32
 }
 
-func NewModuloHasher() hasher {
-	var h hasher = &moduloHasher{h32: fnv.New32a()}
+// NewModuloHasher - create instance of modulo hasher
+func NewModuloHasher() Hasher {
+	var h Hasher = &moduloHasher{h32: fnv.New32a()}
 	return h
 }
 
-func (h *moduloHasher) update(servers []*server) {
+func (h *moduloHasher) Update(servers []*Server) {
 	h.nServers = uint(len(servers))
 }
 
-func (h *moduloHasher) getServerIndex(key string) (uint, error) {
+func (h *moduloHasher) GetServerIndex(key string) (uint, error) {
 	if h.nServers < 1 {
 		return 0, &Error{StatusNetworkError, "No server available", nil}
 	}

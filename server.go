@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-// server represents a server and contains all connections to that server
-type server struct {
+// Server represents a server and contains all connections to that server
+type Server struct {
 	address string
 	scheme  string
 	config  *Config
@@ -24,7 +24,7 @@ type server struct {
 
 const defaultPort = "11211"
 
-func newServer(address, username, password string, config *Config, newMcConn connGen) *server {
+func newServer(address, username, password string, config *Config, newMcConn connGen) *Server {
 	addr := address
 	scheme := "tcp"
 
@@ -50,7 +50,7 @@ func newServer(address, username, password string, config *Config, newMcConn con
 		}
 	}
 
-	server := &server{
+	server := &Server{
 		address: addr,
 		scheme:  scheme,
 		config:  config,
@@ -65,7 +65,7 @@ func newServer(address, username, password string, config *Config, newMcConn con
 	return server
 }
 
-func (s *server) perform(m *msg) error {
+func (s *Server) perform(m *msg) error {
 	var err error
 	for i := 0; ; {
 		timeout := time.After(s.config.ConnectionTimeout)
@@ -112,7 +112,7 @@ func (s *server) perform(m *msg) error {
 	// return err
 }
 
-func (s *server) performStats(m *msg) (McStats, error) {
+func (s *Server) performStats(m *msg) (McStats, error) {
 	timeout := time.After(s.config.ConnectionTimeout)
 	select {
 	case c := <-s.pool:
@@ -134,7 +134,7 @@ func (s *server) performStats(m *msg) (McStats, error) {
 	}
 }
 
-func (s *server) quit(m *msg) {
+func (s *Server) quit(m *msg) {
 	for i := 0; i < s.config.PoolSize; i++ {
 		c := <-s.pool
 		if c == nil {
@@ -146,7 +146,7 @@ func (s *server) quit(m *msg) {
 	close(s.pool)
 }
 
-func (s *server) changeAlive(alive bool) bool {
+func (s *Server) changeAlive(alive bool) bool {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if s.isAlive != alive {

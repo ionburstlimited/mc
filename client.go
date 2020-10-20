@@ -58,7 +58,7 @@ import (
 
 // Client represents a memcached client that is connected to a list of servers
 type Client struct {
-	servers []*server
+	servers []*Server
 	config  *Config
 }
 
@@ -87,7 +87,7 @@ func newMockableMC(servers, username, password string, config *Config, newMcConn
 			newServer(addr, username, password, config, newMcConn))
 	}
 
-	client.config.Hasher.update(client.servers)
+	client.config.Hasher.Update(client.servers)
 
 	return client
 }
@@ -112,13 +112,13 @@ func (c *Client) perform(m *msg) error {
 	return nil
 }
 
-func (c *Client) wakeUp(s *server) {
+func (c *Client) wakeUp(s *Server) {
 	time.Sleep(c.config.DownRetryDelay)
 	s.changeAlive(true)
 }
 
-func (c *Client) getServer(key string) (*server, error) {
-	idx, err := c.config.Hasher.getServerIndex(key)
+func (c *Client) getServer(key string) (*Server, error) {
+	idx, err := c.config.Hasher.GetServerIndex(key)
 	if err != nil {
 		return nil, err
 	}
@@ -197,27 +197,27 @@ func (c *Client) Touch(key string, exp uint32) (cas uint64, err error) {
 }
 
 // Set sets a key/value pair in the cache.
-func (c *Client) Set(key, val string, flags, exp uint32, ocas uint64) (cas uint64, err error) {
+func (c *Client) Set(key string, val string, flags, exp uint32, ocas uint64) (cas uint64, err error) {
 	// Variants: [R] Set [Q]
 	return c.setGeneric(opSet, key, val, ocas, flags, exp)
 }
 
 // Replace replaces an existing key/value in the cache. Fails if key doesn't
 // already exist in cache.
-func (c *Client) Replace(key, val string, flags, exp uint32, ocas uint64) (cas uint64, err error) {
+func (c *Client) Replace(key string, val string, flags, exp uint32, ocas uint64) (cas uint64, err error) {
 	// Variants: Replace [Q]
 	return c.setGeneric(opReplace, key, val, ocas, flags, exp)
 }
 
 // Add adds a new key/value to the cache. Fails if the key already exists in the
 // cache.
-func (c *Client) Add(key, val string, flags, exp uint32) (cas uint64, err error) {
+func (c *Client) Add(key string, val string, flags, exp uint32) (cas uint64, err error) {
 	// Variants: Add [Q]
 	return c.setGeneric(opAdd, key, val, 0, flags, exp)
 }
 
 // Set/Add/Replace a key/value pair in the cache.
-func (c *Client) setGeneric(op opCode, key, val string, ocas uint64, flags, exp uint32) (cas uint64, err error) {
+func (c *Client) setGeneric(op opCode, key string, val string, ocas uint64, flags, exp uint32) (cas uint64, err error) {
 	// Request : MUST key, value, extras ([0..3] flags, [4..7] expiration)
 	// Response: MUST NOT key, value, extras
 	// CAS: If a CAS is specified (non-zero), all sets only succeed if the key
@@ -275,7 +275,7 @@ func (c *Client) incrdecr(op opCode, key string, delta, init uint64, exp uint32,
 		return
 	}
 	// value is returned as an unsigned 64bit integer (i.e., not as a string)
-	return readInt(m.val), m.CAS, nil
+	return readInt(string(m.val[:])), m.CAS, nil
 }
 
 // Convert string stored to an uint64 (where no actual byte changes are needed).
@@ -291,7 +291,7 @@ func readInt(b string) uint64 {
 
 // Append appends the value to the existing value for the key specified. An
 // error is thrown if the key doesn't exist.
-func (c *Client) Append(key, val string, ocas uint64) (cas uint64, err error) {
+func (c *Client) Append(key string, val string, ocas uint64) (cas uint64, err error) {
 	// Variants: [R] Append [Q]
 	// Request : MUST key, value; MUST NOT extras
 	// Response: MUST NOT key, value, extras
@@ -310,7 +310,7 @@ func (c *Client) Append(key, val string, ocas uint64) (cas uint64, err error) {
 
 // Prepend prepends the value to the existing value for the key specified. An
 // error is thrown if the key doesn't exist.
-func (c *Client) Prepend(key, val string, ocas uint64) (cas uint64, err error) {
+func (c *Client) Prepend(key string, val string, ocas uint64) (cas uint64, err error) {
 	// Variants: [R] Append [Q]
 	// Request : MUST key, value; MUST NOT extras
 	// Response: MUST NOT key, value, extras
@@ -417,7 +417,7 @@ func (c *Client) Version() (vers map[string]string, err error) {
 			var ms msg = *m
 			err = s.perform(&ms)
 			if err == nil {
-				vers[s.address] = ms.val
+				vers[s.address] = string(ms.val[:])
 			}
 		}
 	}

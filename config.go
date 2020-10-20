@@ -9,7 +9,7 @@ import (
 // Config holds the Memcache client configuration. Use DefaultConfig to get
 // an initialized version.
 type Config struct {
-	Hasher     hasher
+	Hasher     Hasher
 	Retries    int
 	RetryDelay time.Duration
 	Failover   bool
