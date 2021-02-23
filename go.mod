@@ -1,3 +1,3 @@
-module github.com/iain-cyborn/mc
+module github.com/ionburstlimited/mc
 
 go 1.16
