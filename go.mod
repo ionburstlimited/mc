@@ -1,3 +1,3 @@
-module github.com/memcachier/mc/v3
+module github.com/iain-cyborn/mc
 
-go 1.12
+go 1.16
